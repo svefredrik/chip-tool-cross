@@ -18,6 +18,9 @@ WORKDIR /workspace/connectedhomeip
 # Set up build environment. Seems to depend on bash.
 RUN /usr/bin/bash -c "source /opt/axis/acapsdk/environment-setup-* && source scripts/bootstrap.sh && gn gen --check --fail-on-unused-args --export-compile-commands --root=/workspace/connectedhomeip/examples/chip-tool --args='is_debug=false is_clang=false target_cpu=\"arm64\" sysroot=\"/opt/axis/acapsdk/sysroots/aarch64\"' out/linux-aarch64-chip-tool && ninja -C out/linux-aarch64-chip-tool"
 
-FROM scratch
+RUN aarch64-linux-gnu-strip /workspace/connectedhomeip/out/linux-aarch64-chip-tool/chip-tool
 
+FROM scratch
 COPY --from=builder /workspace/connectedhomeip/out/linux-aarch64-chip-tool/chip-tool /
+
+ENTRYPOINT [ "/chip-tool" ]

@@ -18,6 +18,9 @@ WORKDIR /workspace/connectedhomeip
 # Set up build environment. Seems to depend on bash.
 RUN /usr/bin/bash -c "source /opt/axis/acapsdk/environment-setup-cortexa9hf-neon-poky-linux-gnueabi && source scripts/bootstrap.sh && gn gen --check --fail-on-unused-args --export-compile-commands --root=/workspace/connectedhomeip/examples/chip-tool --args='is_debug=false is_clang=false target_cpu=\"arm\" sysroot=\"/opt/axis/acapsdk/sysroots/armv7hf\"' out/linux-armv7hf-chip-tool && ninja -C out/linux-armv7hf-chip-tool"
 
-FROM scratch
+RUN arm-linux-gnueabihf-strip /workspace/connectedhomeip/out/linux-armv7hf-chip-tool/chip-tool
 
+FROM scratch
 COPY --from=builder /workspace/connectedhomeip/out/linux-armv7hf-chip-tool/chip-tool /
+
+ENTRYPOINT [ "/chip-tool" ]
