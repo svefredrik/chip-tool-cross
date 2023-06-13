@@ -1,0 +1,23 @@
+
+FROM axisecp/acap-sdk:3.3-aarch64-ubuntu20.04 AS builder
+
+ARG CHIP_VERSION=1.1.0.1
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update
+
+# chip-tool dependencies
+RUN apt-get install -yf --no-install-recommends \
+  bash git gcc g++ pkg-config libssl-dev libdbus-1-dev \
+  libglib2.0-dev libavahi-client-dev ninja-build python3-venv python3-dev \
+  python3-pip unzip libgirepository1.0-dev libcairo2-dev libreadline-dev
+
+WORKDIR /workspace
+RUN git clone -b v${CHIP_VERSION} --depth=1 --recurse-submodules https://github.com/project-chip/connectedhomeip.git
+WORKDIR /workspace/connectedhomeip
+
+# Set up build environment. Seems to depend on bash.
+RUN /usr/bin/bash -c "source /opt/axis/acapsdk/environment-setup-* && source scripts/bootstrap.sh && gn gen --check --fail-on-unused-args --export-compile-commands --root=/workspace/connectedhomeip/examples/chip-tool --args='is_debug=false is_clang=false target_cpu=\"arm64\" sysroot=\"/opt/axis/acapsdk/sysroots/aarch64\"' out/linux-aarch64-chip-tool && ninja -C out/linux-aarch64-chip-tool"
+
+FROM scratch
+
+COPY --from=builder /workspace/connectedhomeip/out/linux-aarch64-chip-tool/chip-tool /
